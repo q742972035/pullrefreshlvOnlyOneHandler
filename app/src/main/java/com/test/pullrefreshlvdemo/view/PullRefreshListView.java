@@ -1,4 +1,4 @@
-package com.test.pullrefreshlvdemo.view;
+﻿package com.test.pullrefreshlvdemo.view;
 
 import android.animation.Animator;
 import android.animation.ValueAnimator;
@@ -362,7 +362,7 @@ public class PullRefreshListView extends ListView implements AbsListView.OnScrol
 
         if (scrollState == SCROLL_STATE_FLING || scrollState == SCROLL_STATE_TOUCH_SCROLL) {
             if (mCallback!=null)
-                mCallback.scroll();
+                mCallback.scroll(view,scrollState);
         }
 
         if (footerView == null || !hasScroll || visiableItemHeights < getHeight())
@@ -429,7 +429,7 @@ public class PullRefreshListView extends ListView implements AbsListView.OnScrol
          */
         void stopLoad();
 
-        void scroll();
+        void scroll(AbsListView view, int scrollState);
 
     }
 

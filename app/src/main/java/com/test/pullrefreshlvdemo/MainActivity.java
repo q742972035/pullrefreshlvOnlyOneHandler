@@ -1,9 +1,10 @@
-package com.test.pullrefreshlvdemo;
+﻿package com.test.pullrefreshlvdemo;
 
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
+import android.widget.AbsListView;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -126,7 +127,7 @@ public class MainActivity extends AppCompatActivity implements PullRefreshListVi
     }
 
     @Override
-    public void scroll() {
+    public void scroll(AbsListView view, int scrollState) {
 
     }
 }
