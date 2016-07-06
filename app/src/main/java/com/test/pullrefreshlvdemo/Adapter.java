@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -42,6 +43,13 @@ public class Adapter extends BaseAdapter {
     @Override
     public View getView(final int position, View convertView, ViewGroup parent) {
         convertView = li.inflate(R.layout.item_list,null);
+        LinearLayout ll = (LinearLayout) convertView.findViewById(R.id.header);
+        ll.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+            }
+        });
         convertView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

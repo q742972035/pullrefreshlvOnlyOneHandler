@@ -6,13 +6,14 @@ import android.content.Context;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.widget.AbsListView;
 import android.widget.ListView;
 
 /**
- * Created by q742972035 on 2016/7/2.
+ * Created by 13798 on 2016/7/2.
  */
-public class PullRefreshListView extends ListView implements AbsListView.OnScrollListener {
+public class PullRefreshListView extends ListView implements AbsListView.OnScrollListener{
     private Context mContext;
     /**
      * listview的头部
@@ -55,23 +56,46 @@ public class PullRefreshListView extends ListView implements AbsListView.OnScrol
     private ValueAnimator valueAnimator;
     private int footerHeight;
     private int endHeight;
+    private boolean isPulling;
 
     public PullRefreshListView(Context context) {
         super(context);
         mContext = context;
         setOnScrollListener(this);
+        initHeight();
     }
 
     public PullRefreshListView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         mContext = context;
         setOnScrollListener(this);
+        initHeight();
     }
 
     public PullRefreshListView(Context context, AttributeSet attrs) {
         super(context, attrs);
         mContext = context;
         setOnScrollListener(this);
+        initHeight();
+    }
+
+    /**
+     * 可见item高度
+     */
+    private int visiableItemHeights;
+
+    public void initHeight() {
+        hasScroll = false;
+        visiableItemHeights = 0;
+        getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                getViewTreeObserver().removeGlobalOnLayoutListener(this);
+                for (int i = 0; i < getChildCount(); i++) {
+                    visiableItemHeights += getChildAt(i).getHeight();
+                }
+            }
+        });
     }
 
 
@@ -137,15 +161,19 @@ public class PullRefreshListView extends ListView implements AbsListView.OnScrol
      * 关闭下拉刷新
      */
     private void closeRefreshing() {
+        isLoading = false;
+        setSelection(1);
+        initHeight();
         if (mState != PULL_REFRESH)
             setState(PULL_REFRESH);
         headerView.setPadding(0, headerHeight, 0, 0);
-        if (mCallback!=null)
+        if (mCallback != null)
             mCallback.stopRefresh();
     }
 
 
     private boolean isLoading;
+
     /**
      * 关闭正在加载
      */
@@ -154,13 +182,17 @@ public class PullRefreshListView extends ListView implements AbsListView.OnScrol
         if (mState != PULL_REFRESH)
             setState(PULL_REFRESH);
         footerView.setPadding(0, 0, 0, footerHeight);
-        if (mCallback!=null)
+        if (mCallback != null)
             mCallback.stopLoad();
     }
 
     private boolean isUp = true;
     private int lastY;
     private int lastPadding;
+    /**
+     * 用于判断滑动，为true后将不变
+     */
+    private boolean hasScroll;
 
     /**
      * 不使用actiondown,避免adapter的点击事件与其冲突
@@ -176,6 +208,9 @@ public class PullRefreshListView extends ListView implements AbsListView.OnScrol
         switch (ev.getAction()) {
             case MotionEvent.ACTION_MOVE:
                 if (isUp) {
+                    if (!hasScroll)
+                        hasScroll = true;
+
                     isUp = false;
                     // TODO 这里进行down操作
                     lastY = (int) ev.getY();
@@ -183,14 +218,14 @@ public class PullRefreshListView extends ListView implements AbsListView.OnScrol
                         valueAnimator.cancel();
 
                 }
-                boolean isPulling = ev.getY() - lastY > 0;
+                isPulling = ev.getY() - lastY > 0;
                 float dY = (ev.getY() - lastY) * mDamp;
                 lastY = (int) ev.getY();
                 int paddingTop = (int) (headerView.getPaddingTop() + dY);
 
 
                 if (paddingTop > headerHeight && getFirstVisiblePosition() == 0) {
-                    if (isPulling && mState == REFRESHING && paddingTop>0){
+                    if (isPulling && mState == REFRESHING && paddingTop > 0) {
                         return true;
                     }
 
@@ -221,7 +256,7 @@ public class PullRefreshListView extends ListView implements AbsListView.OnScrol
                 else if (mState == LOOSEN_REFRESH)
                     endHeight = 0;
 
-                if (endHeight != -1){
+                if (endHeight != -1) {
                     valueAnimator = ValueAnimator.ofInt(headerView.getPaddingTop(), endHeight);
                     valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
                         @Override
@@ -229,7 +264,9 @@ public class PullRefreshListView extends ListView implements AbsListView.OnScrol
                             int padding = (int) animation.getAnimatedValue();
                             lastPadding = padding;
                             float percent = (padding + Math.abs(headerHeight)) * 1.0f / Math.abs(headerHeight);
-                            mCallback.drag(percent,padding - lastPadding);
+                            if (mCallback != null) {
+                                mCallback.drag(percent, padding - lastPadding);
+                            }
                             if (padding < 0) {
                                 if (mCallback != null)
                                     mCallback.dragToLoosen(percent, padding - lastPadding);
@@ -240,9 +277,9 @@ public class PullRefreshListView extends ListView implements AbsListView.OnScrol
                     valueAnimator.addListener(new SimpleAnimatorListener() {
                         @Override
                         public void onAnimationEnd(Animator animation) {
-                            if (endHeight == 0){
+                            if (endHeight == 0) {
                                 setState(REFRESHING);
-                            }else if (endHeight == headerHeight)
+                            } else if (endHeight == headerHeight)
                                 setState(PULL_REFRESH);
                         }
                     });
@@ -262,21 +299,20 @@ public class PullRefreshListView extends ListView implements AbsListView.OnScrol
             state = LOADING;
 
 
-
         switch (state) {
             // 下拉刷新状态
             case PULL_REFRESH:
-                if (mState != PULL_REFRESH && headerView!=null){
+                if (mState != PULL_REFRESH && headerView != null) {
                     mState = PULL_REFRESH;
-                    if (mCallback!=null)
+                    if (mCallback != null)
                         mCallback.toRullRefresh();
                 }
                 break;
             // 松开刷新状态
             case LOOSEN_REFRESH:
-                if (mState != LOOSEN_REFRESH && headerView!=null){
+                if (mState != LOOSEN_REFRESH && headerView != null) {
                     mState = LOOSEN_REFRESH;
-                    if (mCallback!=null)
+                    if (mCallback != null)
                         mCallback.toLoosenRefresh();
                 }
                 break;
@@ -289,11 +325,12 @@ public class PullRefreshListView extends ListView implements AbsListView.OnScrol
                 }
                 break;
             case LOADING:
-                if (!isLoading){
+                if (!isLoading) {
+                    footerView.setPadding(0, 0, 0, 0);
                     isLoading = true;
-                    if (mState != LOADING && footerView != null){
+                    if (mState != LOADING && footerView != null) {
                         mState = LOADING;
-                        if (mCallback !=null)
+                        if (mCallback != null)
                             mCallback.toLoading();
                     }
                 }
@@ -304,32 +341,6 @@ public class PullRefreshListView extends ListView implements AbsListView.OnScrol
     }
 
 
-    @Override
-    public void onScrollStateChanged(AbsListView view, int scrollState) {
-        if (headerView != null) {
-            if (getFirstVisiblePosition() >= 1 && scrollState == SCROLL_STATE_FLING) {
-                headerView.setPadding(0, headerHeight, 0, 0);
-                if (mState == REFRESHING)
-                    headerView.setPadding(0, 0, 0, 0);
-            }
-
-        }
-    }
-
-    @Override
-    public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
-        if (footerView == null)
-            return;
-
-        if (getLastVisiblePosition() == getCount() - 1 && mState != REFRESHING) {
-            footerView.setPadding(0, 0, 0, 0);
-            if (mState != REFRESHING){
-                setState(LOADING);
-                setSelection(getCount());
-            }
-        }
-    }
-
     /**
      * 避免繁琐的判断
      */
@@ -337,6 +348,37 @@ public class PullRefreshListView extends ListView implements AbsListView.OnScrol
 
     public void setStateCallBace(StateCallBack callback) {
         mCallback = callback;
+    }
+
+    @Override
+    public void onScrollStateChanged(AbsListView view, int scrollState) {
+        if (headerView != null) {
+            if (getFirstVisiblePosition() >= 1 && scrollState == OnScrollListener.SCROLL_STATE_FLING) {
+                headerView.setPadding(0, headerHeight, 0, 0);
+                if (mState == REFRESHING)
+                    headerView.setPadding(0, 0, 0, 0);
+            }
+        }
+
+        if (scrollState == SCROLL_STATE_FLING || scrollState == SCROLL_STATE_TOUCH_SCROLL) {
+            if (mCallback!=null)
+                mCallback.scroll();
+        }
+
+        if (footerView == null || !hasScroll || visiableItemHeights < getHeight())
+            return;
+
+        if (getLastVisiblePosition() == getCount() - 1 && mState != REFRESHING && scrollState==SCROLL_STATE_IDLE) {
+            if ( !isLoading) {
+                setState(LOADING);
+                setSelection(getCount());
+            }
+        }
+    }
+
+    @Override
+    public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+
     }
 
     public interface StateCallBack {
@@ -350,7 +392,8 @@ public class PullRefreshListView extends ListView implements AbsListView.OnScrol
          */
         void toRullRefresh();
 
-        /**toLoading
+        /**
+         * toLoading
          * 状态为正在刷新
          */
         void toRefreshing();
@@ -385,6 +428,8 @@ public class PullRefreshListView extends ListView implements AbsListView.OnScrol
          * 停止正在加载（被动执行）
          */
         void stopLoad();
+
+        void scroll();
 
     }
 
@@ -445,7 +490,7 @@ public class PullRefreshListView extends ListView implements AbsListView.OnScrol
         /**
          * 设置滑动时阻尼系数
          */
-        public Builder setDamp(int damp) {
+        public Builder setDamp(float damp) {
             mLv.setDamp(damp);
             return this;
         }
@@ -466,5 +511,4 @@ public class PullRefreshListView extends ListView implements AbsListView.OnScrol
             return this;
         }
     }
-
 }

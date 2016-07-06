@@ -46,7 +46,7 @@ public class MainActivity extends AppCompatActivity implements PullRefreshListVi
     List<String> list;
     private void init() {
         list = new ArrayList<>();
-        for (int i=0;i<20;i++){
+        for (int i=0;i<15;i++){
             list.add(String.valueOf(counts++)+"　　第"+refresh+"次刷新。");
         }
         a = new Adapter(this,list);
@@ -77,7 +77,6 @@ public class MainActivity extends AppCompatActivity implements PullRefreshListVi
         pb.setVisibility(View.VISIBLE);
         h =new Handler();
         h.postDelayed(r =new Runnable() {
-
             @Override
             public void run() {
                 counts = 0;
@@ -89,7 +88,7 @@ public class MainActivity extends AppCompatActivity implements PullRefreshListVi
                 a.notifyDataSetChanged();
                 builder.closeRefreshing();
             }
-        },50000);
+        },3000);
     }
 
     @Override
@@ -124,5 +123,10 @@ public class MainActivity extends AppCompatActivity implements PullRefreshListVi
     @Override
     public void stopLoad() {
         Toast.makeText(this, "停止加载不允许通过手动滑动停止", Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void scroll() {
+
     }
 }
