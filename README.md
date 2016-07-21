@@ -1,11 +1,36 @@
 # pullrefreshlvOnlyOneHandler
 下拉刷新和上拉加载，不允许滑动打断
 
+## 7月21号更新 ##
+- 新增功能 ：
+禁用上拉下载、禁用下拉刷新。
+
+在之前的代码，比如：
+
+        builder.setDamp(0.3f)
+              .setDuration(500)
+              .setFooterView(View view)
+              .setHeaderView(View view);
+
+在此时，如果写上了大量的逻辑，在别处大量调用该对象，那么删除view对象也不怎么雅观，因此，可以这样写：
+
+     builder.setDamp(0.3f)
+                .setHeader(false)
+                .setFooter(false)
+                .setDuration(500)
+                .setFooterView(View view)
+                .setHeaderView(View view);
+
+仅仅加上两句，就可以禁用上拉加载和下拉刷新了，记得噢！
+- setHeader必须写在setHeaderView方法前面
+- setFooter必须写在setFooterView方法前面
+
+## 使用方法 ##
 - 具体流程：
- 先在oncreate中找到该控件：  
+先在oncreate中找到该控件：  
 
  lv = (PullRefreshListView) findViewById(R.id.lv_pullrefresh);
- 
+
 - 得到建造者：
 
   PullRefreshListView.Builder builder = lv.new Builder(lv);
@@ -29,7 +54,7 @@ builder.closeRefreshing();
  lv.setStateCallBace(State CallBack callback);
 
 ## 回调方法何时调用 ##
-- 当状态为“松开刷新”时 
+- 当状态为“松开刷新”时
 
 void toLoosenRefresh();
 

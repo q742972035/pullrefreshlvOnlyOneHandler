@@ -53,6 +53,14 @@ public class PullRefreshListView extends ListView implements AbsListView.OnScrol
      * 初始化状态
      */
     private int mState = PULL_REFRESH;
+    /**
+     * 是否显示头部，默认为true
+     */
+    private boolean isShowHeader = true;
+    /**
+     * 是否显示脚部，默认为true
+     */
+    private boolean isShowFooter = true;
     private ValueAnimator valueAnimator;
     private int footerHeight;
     private int endHeight;
@@ -105,6 +113,8 @@ public class PullRefreshListView extends ListView implements AbsListView.OnScrol
      * @param view
      */
     private void setHeaderView(View view) {
+        if (!isShowHeader)
+            return;
         headerView = view;
         headerView.measure(0, 0);
         headerView.setPadding(0, -headerView.getMeasuredHeight(), 0, 0);
@@ -139,6 +149,8 @@ public class PullRefreshListView extends ListView implements AbsListView.OnScrol
      * @param view
      */
     private void setFooterView(View view) {
+        if (!isShowFooter)
+            return;
         footerView = view;
         footerView.measure(0, 0);
         footerView.setPadding(0, 0, 0, -footerView.getMeasuredHeight());
@@ -508,6 +520,16 @@ public class PullRefreshListView extends ListView implements AbsListView.OnScrol
          */
         public Builder closeRefreshing() {
             mLv.closeRefreshing();
+            return this;
+        }
+
+        public Builder setHeader(boolean show){
+            mLv.isShowHeader = show;
+            return this;
+        }
+
+        public Builder setFooter(boolean show){
+            mLv.isShowFooter = show;
             return this;
         }
     }

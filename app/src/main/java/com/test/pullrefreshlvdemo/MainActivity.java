@@ -52,8 +52,10 @@ public class MainActivity extends AppCompatActivity implements PullRefreshListVi
         }
         a = new Adapter(this,list);
         lv.setAdapter(a);
-        builder.setHeaderView(header =View.inflate(this,R.layout.header_view,null));
-        builder.setFooterView(footer = View.inflate(this,R.layout.footer_view,null));
+        builder.setHeader(false)
+                .setFooter(false)
+                .setHeaderView(header =View.inflate(this,R.layout.header_view,null))
+                .setFooterView(footer = View.inflate(this,R.layout.footer_view,null));
         lv.setStateCallBace(this);
     }
 
